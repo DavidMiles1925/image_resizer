@@ -3,11 +3,17 @@ import glob
 import tkinter as tk
 from tkinter import filedialog, simpledialog, ttk, messagebox
 from PIL import Image
+from PIL import ImageEnhance
 
 
-def resize_image(path, output_folder, target_size, keep_aspect, crop_to_fit):
+def resize_image(path, output_folder, target_size, keep_aspect, crop_to_fit, brightness_enhance):
     try:
+
         with Image.open(path) as img:
+            if brightness_enhance:
+                enhancer = ImageEnhance.Brightness(img)
+                img = enhancer.enhance(1.2)
+
             if crop_to_fit:
                 img = resize_and_crop(img, target_size)
             elif keep_aspect:
@@ -31,7 +37,7 @@ def process_images(input_folder, output_folder, target_size, keep_aspect, progre
 
     total = len(image_paths)
     for i, path in enumerate(image_paths, start=1):
-        resize_image(path, output_folder, target_size, keep_aspect, crop_var.get())
+        resize_image(path, output_folder, target_size, keep_aspect, crop_var.get(), brightness_var.get())
         progress_bar["value"] = (i / total) * 100
         root.update_idletasks()
 
@@ -89,7 +95,7 @@ def start_resize_selected():
 
     total = len(file_paths)
     for i, path in enumerate(file_paths, start=1):
-        resize_image(path, output_folder, size, keep_aspect, crop_var.get())
+        resize_image(path, output_folder, size, keep_aspect, crop_var.get(), brightness_var.get())
         progress_bar["value"] = (i / total) * 100
         root.update_idletasks()
 
@@ -124,25 +130,38 @@ def resize_and_crop(img, target_size):
 
 
 root = tk.Tk()
-root.title("Batch Image Resizer")
-root.geometry("400x300")
+root.title("Batch Image Resizer v1.1")
+root.geometry("400x350")
 
 frame = tk.Frame(root)
 frame.pack(pady=20)
 
+bright_label = tk.Label(frame, text="Increase Brightness?", font=("Arial", 10))
+bright_label.grid(row=0, column=0, columnspan=2, pady=10)
+
+brightness_var = tk.BooleanVar()
+brightness_check = tk.Checkbutton(frame, text="Increase brightness 20%", variable=brightness_var)
+brightness_check.grid(row=0, column=2, columnspan=2, pady=10)
+
+choice_label = tk.Label(frame, text="Select up to ONE:", font=("Arial", 10))
+choice_label.grid(row=1, column=1, columnspan=2, pady=10)
+
 aspect_var = tk.BooleanVar()
 aspect_check = tk.Checkbutton(frame, text="Keep Aspect Ratio", variable=aspect_var)
-aspect_check.grid(row=0, column=0, columnspan=2, pady=10)
+aspect_check.grid(row=2, column=0, columnspan=2, pady=10)
 
 crop_var = tk.BooleanVar()
 crop_check = tk.Checkbutton(frame, text="Crop to Fit", variable=crop_var)
-crop_check.grid(row=1, column=0, columnspan=2, pady=10)
+crop_check.grid(row=2, column=2, columnspan=2, pady=10)
 
-start_button = tk.Button(frame, text="Start Batch Resize", command=start_resize)
-start_button.grid(row=2, column=0, columnspan=2, pady=10)
+button_label = tk.Label(frame, text="Resize folder or files(s)?", font=("Arial", 10))
+button_label.grid(row=3, column=1, columnspan=2, pady=10)
 
-select_button = tk.Button(frame, text="Resize Selected Images", command=start_resize_selected)
-select_button.grid(row=3, column=0, columnspan=2, pady=5)
+start_button = tk.Button(frame, text="Start Batch (Folder) Resize", command=start_resize)
+start_button.grid(row=4, column=0, columnspan=2, pady=10)
+
+select_button = tk.Button(frame, text="Resize Only Selected Images", command=start_resize_selected)
+select_button.grid(row=4, column=2, columnspan=2, pady=5)
 
 progress_bar = ttk.Progressbar(root, orient="horizontal", length=300, mode="determinate")
 progress_bar.pack(pady=10)

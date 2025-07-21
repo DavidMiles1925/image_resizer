@@ -34,7 +34,7 @@ missing module named multiprocessing.set_start_method - imported by multiprocess
 missing module named multiprocessing.get_start_method - imported by multiprocessing (top-level), multiprocessing.spawn (top-level)
 missing module named pyimod02_importers - imported by C:\Users\David\AppData\Local\Programs\Python\Python313\Lib\site-packages\PyInstaller\hooks\rthooks\pyi_rth_pkgutil.py (delayed)
 missing module named _suggestions - imported by traceback (delayed, optional)
-missing module named olefile - imported by PIL.FpxImagePlugin (top-level), PIL.MicImagePlugin (top-level)
 missing module named asyncio.DefaultEventLoopPolicy - imported by asyncio (delayed, conditional), asyncio.events (delayed, conditional)
 missing module named numpy - imported by PIL._typing (conditional, optional)
+missing module named olefile - imported by PIL.FpxImagePlugin (top-level), PIL.MicImagePlugin (top-level)
 missing module named defusedxml - imported by PIL.Image (optional)

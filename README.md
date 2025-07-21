@@ -13,6 +13,7 @@ A simple Python GUI application to batch resize images with options to keep aspe
 - Progress bar to track batch resizing progress.
 - Supports common image formats: JPG, JPEG, PNG, BMP, GIF.
 - User-friendly dialogs guide you through each step.
+- Option to increase brightness by 20% (v1.1)
 
 ---
 
