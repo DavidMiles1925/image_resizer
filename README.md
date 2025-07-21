@@ -16,19 +16,21 @@ A simple Python GUI application to batch resize images with options to keep aspe
 
 ---
 
-## Requirements
+## Windows Installation
+
+From the `/dist` folder above, download and run the file `main.exe`.
+
+---
+
+## Python Installation
+
+### Requirements
 
 - Python 3.7 or later
 - [Pillow](https://python-pillow.org/) (Python Imaging Library fork)
 - Standard Python libraries: `tkinter` (usually included with Python)
 
----
-
-## Windows Installation
-
-From the `/dist` folder above, download and run the file `main.exe`.
-
-## Python Installation
+### Procedure
 
 1. Clone this repository or download the script file.
 
