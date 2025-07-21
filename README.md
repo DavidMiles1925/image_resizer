@@ -45,3 +45,14 @@ pip install pillow
 ```bash
 python main.py
 ```
+
+---
+
+## Distribution Notes
+
+Windows package was made with pyinstaller
+
+```bash
+pip install pyinstaller
+pyinstaller --onefile --windowed --icon=resize.ico main.py
+```
