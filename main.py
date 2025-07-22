@@ -135,6 +135,7 @@ def resize_and_crop(img, target_size):
 
 root = tk.Tk()
 root.title("Batch Image Resizer v1.2")
+root.iconbitmap("resize.ico")
 root.geometry("400x350")
 
 frame = tk.Frame(root)
