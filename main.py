@@ -4,6 +4,14 @@ import tkinter as tk
 from tkinter import filedialog, simpledialog, ttk, messagebox
 from PIL import Image
 from PIL import ImageEnhance
+import sys
+
+def resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
 
 
 def resize_image(path, output_folder, target_size, keep_aspect, crop_to_fit, brightness_enhance, suffix):
@@ -135,7 +143,10 @@ def resize_and_crop(img, target_size):
 
 root = tk.Tk()
 root.title("Batch Image Resizer v1.2")
-root.iconbitmap("resize.ico")
+try:
+    root.iconbitmap(resource_path("resize.ico"))
+except Exception as e:
+    print(f"Failed to load icon: {e}")
 root.geometry("400x350")
 
 frame = tk.Frame(root)

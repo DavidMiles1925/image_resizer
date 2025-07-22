@@ -55,7 +55,7 @@ python main.py
 
 Windows package was made with pyinstaller
 
-```bash
+````bash
 pip install pyinstaller
-pyinstaller --onefile --windowed --icon=resize.ico main.py
-```
+pyinstaller --onefile --windowed --add-data "resize.ico;." main.py```
+````
