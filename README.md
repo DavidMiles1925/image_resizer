@@ -7,13 +7,15 @@ A simple Python GUI application to batch resize images with options to keep aspe
 ## Features
 
 - Resize images to any specified width and height.
+- Option to **increase brightness** by 20% (v1.1)
 - Option to **keep aspect ratio** (resize to fit within target size without distortion).
 - Option to **crop-to-fit** (resize and crop images to exactly fill the target size).
+- Option to **edit file suffix**. (v1.2)
 - Resize all images in a folder or select specific image files.
 - Progress bar to track batch resizing progress.
+- Display current working filename above the progress bar. (v1.2)
 - Supports common image formats: JPG, JPEG, PNG, BMP, GIF.
 - User-friendly dialogs guide you through each step.
-- Option to increase brightness by 20% (v1.1)
 
 ---
 

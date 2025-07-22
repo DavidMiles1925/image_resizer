@@ -6,7 +6,7 @@ from PIL import Image
 from PIL import ImageEnhance
 
 
-def resize_image(path, output_folder, target_size, keep_aspect, crop_to_fit, brightness_enhance):
+def resize_image(path, output_folder, target_size, keep_aspect, crop_to_fit, brightness_enhance, suffix):
     try:
 
         with Image.open(path) as img:
@@ -23,7 +23,7 @@ def resize_image(path, output_folder, target_size, keep_aspect, crop_to_fit, bri
 
             base = os.path.basename(path)
             name, ext = os.path.splitext(base)
-            output_path = os.path.join(output_folder, f"{name}_resized{ext}")
+            output_path = os.path.join(output_folder, f"{name}{suffix}{ext}")
             img.save(output_path)
             return output_path
     except Exception as e:
@@ -31,16 +31,18 @@ def resize_image(path, output_folder, target_size, keep_aspect, crop_to_fit, bri
         return None
 
 
-def process_images(input_folder, output_folder, target_size, keep_aspect, progress_bar):
+def process_images(input_folder, output_folder, target_size, keep_aspect, progress_bar, filename_label):
     image_paths = glob.glob(os.path.join(input_folder, "*.*"))
     image_paths = [p for p in image_paths if p.lower().endswith((".jpg", ".jpeg", ".png", ".bmp", ".gif"))]
 
     total = len(image_paths)
     for i, path in enumerate(image_paths, start=1):
-        resize_image(path, output_folder, target_size, keep_aspect, crop_var.get(), brightness_var.get())
+        filename_label.config(text=os.path.basename(path))  # Update label
+        resize_image(path, output_folder, target_size, keep_aspect, crop_var.get(), brightness_var.get(), suffix_entry.get())
         progress_bar["value"] = (i / total) * 100
         root.update_idletasks()
 
+    filename_label.config(text="All done!")  # Reset text
     messagebox.showinfo("Done", f"Resized {total} images!")
 
 
@@ -65,8 +67,7 @@ def start_resize():
     keep_aspect = aspect_var.get()
     size = (width, height)
     progress_bar["value"] = 0
-    process_images(input_folder, output_folder, size, keep_aspect, progress_bar)
-
+    process_images(input_folder, output_folder, size, keep_aspect, progress_bar, filename_label)
 
 def start_resize_selected():
     messagebox.showinfo("Step 1", "Select one or more images you want to resize.")
@@ -95,9 +96,12 @@ def start_resize_selected():
 
     total = len(file_paths)
     for i, path in enumerate(file_paths, start=1):
-        resize_image(path, output_folder, size, keep_aspect, crop_var.get(), brightness_var.get())
+        filename_label.config(text=os.path.basename(path))  # Show current file
+        resize_image(path, output_folder, size, keep_aspect, crop_var.get(), brightness_var.get(), suffix_entry.get())
         progress_bar["value"] = (i / total) * 100
         root.update_idletasks()
+
+    filename_label.config(text="All done!")
 
     messagebox.showinfo("Done", f"Resized {total} images!")
 
@@ -130,38 +134,47 @@ def resize_and_crop(img, target_size):
 
 
 root = tk.Tk()
-root.title("Batch Image Resizer v1.1")
+root.title("Batch Image Resizer v1.2")
 root.geometry("400x350")
 
 frame = tk.Frame(root)
 frame.pack(pady=20)
 
-bright_label = tk.Label(frame, text="Increase Brightness?", font=("Arial", 10))
-bright_label.grid(row=0, column=0, columnspan=2, pady=10)
+bright_label = tk.Label(frame, text="Increase Brightness?", font=("Arial", 10, "bold"))
+bright_label.grid(row=0, column=0, columnspan=2, pady=5)
 
 brightness_var = tk.BooleanVar()
 brightness_check = tk.Checkbutton(frame, text="Increase brightness 20%", variable=brightness_var)
-brightness_check.grid(row=0, column=2, columnspan=2, pady=10)
+brightness_check.grid(row=0, column=2, columnspan=2, pady=5)
 
-choice_label = tk.Label(frame, text="Select up to ONE:", font=("Arial", 10))
-choice_label.grid(row=1, column=1, columnspan=2, pady=10)
+choice_label = tk.Label(frame, text="Select up to ONE:", font=("Arial", 10, "bold"))
+choice_label.grid(row=1, column=1, columnspan=2, pady=5)
 
 aspect_var = tk.BooleanVar()
 aspect_check = tk.Checkbutton(frame, text="Keep Aspect Ratio", variable=aspect_var)
-aspect_check.grid(row=2, column=0, columnspan=2, pady=10)
+aspect_check.grid(row=2, column=0, columnspan=2, pady=5)
 
 crop_var = tk.BooleanVar()
 crop_check = tk.Checkbutton(frame, text="Crop to Fit", variable=crop_var)
-crop_check.grid(row=2, column=2, columnspan=2, pady=10)
+crop_check.grid(row=2, column=2, columnspan=2, pady=5)
 
-button_label = tk.Label(frame, text="Resize folder or files(s)?", font=("Arial", 10))
-button_label.grid(row=3, column=1, columnspan=2, pady=10)
+suffix_label = tk.Label(frame, text="Filename suffix:", font=("Arial", 10, "bold"))
+suffix_label.grid(row=3, column=1, columnspan=2, pady=5)
+suffix_entry = tk.Entry(frame)
+suffix_entry.insert(0, "_resized")  # Default value
+suffix_entry.grid(row=3, column=3, columnspan=2, pady=5)
+
+button_label = tk.Label(frame, text="Resize folder or files(s)?", font=("Arial", 10, "bold"))
+button_label.grid(row=4, column=1, columnspan=2, pady=5)
 
 start_button = tk.Button(frame, text="Start Batch (Folder) Resize", command=start_resize)
-start_button.grid(row=4, column=0, columnspan=2, pady=10)
+start_button.grid(row=5, column=0, columnspan=2, pady=5)
 
 select_button = tk.Button(frame, text="Resize Only Selected Images", command=start_resize_selected)
-select_button.grid(row=4, column=2, columnspan=2, pady=5)
+select_button.grid(row=5, column=2, columnspan=2, pady=5)
+
+filename_label = tk.Label(root, text="Ready", font=("Arial", 10))
+filename_label.pack(pady=5)
 
 progress_bar = ttk.Progressbar(root, orient="horizontal", length=300, mode="determinate")
 progress_bar.pack(pady=10)
