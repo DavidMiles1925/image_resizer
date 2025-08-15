@@ -6,12 +6,13 @@ A simple Python GUI application to batch resize images with options to keep aspe
 
 ## Features
 
-- Resize images to any specified width and height.
-- Option to **increase brightness** by 20% (v1.1)
+- Resize images to any specified width and height. (updated v1.3)
+- Option to **increase brightness** by a specified amount (updated v1.3)
 - Option to **keep aspect ratio** (resize to fit within target size without distortion).
 - Option to **crop-to-fit** (resize and crop images to exactly fill the target size).
-- Option to **edit file suffix**. (v1.2)
+- Option to **edit file suffix**. (added v1.2)
 - Resize all images in a folder or select specific image files.
+- Drage and drop files to the GUI to resize them. (added v1.3)
 - Progress bar to track batch resizing progress.
 - Display current working filename above the progress bar. (v1.2)
 - Supports common image formats: JPG, JPEG, PNG, BMP, GIF.
@@ -21,7 +22,7 @@ A simple Python GUI application to batch resize images with options to keep aspe
 
 ## Windows Installation
 
-From the `/dist` folder above, download and run the file `main.exe`.
+From the `/dist` folder above, download and run the file `resize.exe`.
 
 ---
 
@@ -32,21 +33,22 @@ From the `/dist` folder above, download and run the file `main.exe`.
 - Python 3.7 or later
 - [Pillow](https://python-pillow.org/) (Python Imaging Library fork)
 - Standard Python libraries: `tkinter` (usually included with Python)
-
-**Drag-and_Drop Feature requires pip install tkinterdnd2**
-
-```bash
-pip install tkinterdnd2
-```
+- Drag-and_Drop Feature requires pip install tkinterdnd2 (new to version 1.2)
 
 ### Procedure
 
 1. Clone this repository or download the script file.
 
-2. Install Pillow if you don't have it:
+2. Install `Pillow` if you don't have it:
 
 ```bash
 pip install pillow
+```
+
+3. Install `tkinterdnd2`
+
+```bash
+pip install tkinterdnd2
 ```
 
 3. Run the program from the command line.
@@ -63,5 +65,5 @@ Windows package was made with pyinstaller
 
 ```bash
 pip install pyinstaller
-pyinstaller --onefile --windowed --icon=resize.ico --add-data "resize.ico;." main.py
+pyinstaller --onefile --windowed --icon=resize.ico --add-data "resize.ico;." resize.py
 ```
