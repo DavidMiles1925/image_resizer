@@ -1,10 +1,23 @@
 import os
 import glob
+import re
+import sys
 import tkinter as tk
 from tkinter import filedialog, ttk, messagebox
 from PIL import Image
 from PIL import ImageEnhance
-import sys
+
+# Try to import tkinterdnd2 for drag-and-drop support
+try:
+    from tkinterdnd2 import DND_FILES, TkinterDnD
+    DND_AVAILABLE = True
+except Exception:
+    DND_AVAILABLE = False
+
+DEFAULT_IMAGE_RESIZE_WIDTH = 3072
+DEFAULT_IMAGE_RESIZE_HEIGHT = 3072
+DEFAULT_SUFFIX = "_resized"
+
 
 def resource_path(relative_path):
     try:
@@ -161,16 +174,100 @@ def resize_and_crop(img, target_size):
     return img
 
 
-root = tk.Tk()
-root.title("Batch Image Resizer v1.2")
+def parse_drop_files(data):
+    """
+    Parse the event.data string from tkinterdnd2's drop event.
+    It may contain braced paths or plain paths separated by spaces.
+    Example forms:
+      '{C:\\path with spaces\\file.jpg} {C:\\another.jpg}'
+      '/home/user/file1.jpg /home/user/file2.jpg'
+    """
+    parts = re.findall(r'{([^}]*)}|([^ ]+)', data)
+    files = []
+    for g1, g2 in parts:
+        file = g1 if g1 else g2
+        files.append(file)
+    return files
+
+
+def handle_dropped_paths(paths):
+    """
+    Given a list of dropped paths (files or folders), process images found.
+    Save processed images in the folder they came from (for files) or in the folder itself (for folders).
+    """
+    sizes = validate_size_entries()
+    if sizes is None:
+        return
+
+    # Expand directories to image lists; keep files as-is if they are images
+    supported_exts = (".jpg", ".jpeg", ".png", ".bmp", ".gif")
+    image_paths = []
+
+    for p in paths:
+        if os.path.isdir(p):
+            found = glob.glob(os.path.join(p, "*.*"))
+            found = [f for f in found if f.lower().endswith(supported_exts)]
+            image_paths.extend(found)
+        elif os.path.isfile(p):
+            if p.lower().endswith(supported_exts):
+                image_paths.append(p)
+            else:
+                # Not a supported image; skip
+                pass
+        else:
+            # Path doesn't exist - skip
+            pass
+
+    if not image_paths:
+        messagebox.showinfo("No Images", "No supported images found in the dropped items.")
+        return
+
+    total = len(image_paths)
+    progress_bar["value"] = 0
+    size = sizes
+    keep_aspect = aspect_var.get()
+    suffix = suffix_entry.get()
+    brightness = brightness_var.get()
+    crop = crop_var.get()
+
+    for i, img_path in enumerate(image_paths, start=1):
+        filename_label.config(text=os.path.basename(img_path))
+        output_folder = os.path.dirname(img_path)  # Save in original folder as requested
+        resize_image(img_path, output_folder, size, keep_aspect, crop, brightness, suffix)
+        progress_bar["value"] = (i / total) * 100
+        root.update_idletasks()
+
+    filename_label.config(text="All done!")
+    messagebox.showinfo("Done", f"Resized {total} images (from dropped items).")
+
+
+def on_drop(event):
+    """
+    Handler for <<Drop>> event from tkinterdnd2. event.data contains paths.
+    """
+    try:
+        data = event.data
+        paths = parse_drop_files(data)
+        handle_dropped_paths(paths)
+    except Exception as e:
+        messagebox.showerror("Drop Error", f"Failed to handle dropped items: {e}")
+
+
+# Create main window (use TkinterDnD.Tk() if available)
+if DND_AVAILABLE:
+    root = TkinterDnD.Tk()
+else:
+    root = tk.Tk()
+
+root.title("Batch Image Resizer v1.3 (with Drag & Drop)")
 try:
     root.iconbitmap(resource_path("resize.ico"))
 except Exception as e:
     print(f"Failed to load icon: {e}")
-root.geometry("420x380")
+root.geometry("520x430")
 
 frame = tk.Frame(root)
-frame.pack(pady=20)
+frame.pack(pady=10)
 
 bright_label = tk.Label(frame, text="Increase Brightness?", font=("Arial", 10, "bold"))
 bright_label.grid(row=0, column=0, columnspan=2, pady=5)
@@ -193,23 +290,22 @@ crop_check.grid(row=2, column=2, columnspan=2, pady=5)
 suffix_label = tk.Label(frame, text="Filename suffix:", font=("Arial", 10, "bold"))
 suffix_label.grid(row=3, column=1, columnspan=2, pady=5)
 suffix_entry = tk.Entry(frame)
-suffix_entry.insert(0, "_resized")  # Default value
+suffix_entry.insert(0, DEFAULT_SUFFIX)  # Default value
 suffix_entry.grid(row=3, column=3, columnspan=2, pady=5)
 
-# New width and height entries placed below the suffix input
 width_label = tk.Label(frame, text="Width:", font=("Arial", 10))
 width_label.grid(row=4, column=0, pady=8, sticky="e")
-width_entry = tk.Entry(frame, width=10)
-width_entry.insert(0, "800")  # example default
+width_entry = tk.Entry(frame, width=12)
+width_entry.insert(0, DEFAULT_IMAGE_RESIZE_WIDTH)
 width_entry.grid(row=4, column=1, pady=8, sticky="w")
 
 height_label = tk.Label(frame, text="Height:", font=("Arial", 10))
 height_label.grid(row=4, column=2, pady=8, sticky="e")
-height_entry = tk.Entry(frame, width=10)
-height_entry.insert(0, "600")  # example default
+height_entry = tk.Entry(frame, width=12)
+height_entry.insert(0, DEFAULT_IMAGE_RESIZE_HEIGHT)
 height_entry.grid(row=4, column=3, pady=8, sticky="w")
 
-button_label = tk.Label(frame, text="Resize folder or files(s)?", font=("Arial", 10, "bold"))
+button_label = tk.Label(frame, text="Resize folder or file(s)?", font=("Arial", 10, "bold"))
 button_label.grid(row=5, column=1, columnspan=2, pady=5)
 
 start_button = tk.Button(frame, text="Start Batch (Folder) Resize", command=start_resize)
@@ -221,7 +317,38 @@ select_button.grid(row=6, column=2, columnspan=2, pady=5)
 filename_label = tk.Label(root, text="Ready", font=("Arial", 10))
 filename_label.pack(pady=5)
 
-progress_bar = ttk.Progressbar(root, orient="horizontal", length=340, mode="determinate")
+# Drag & Drop area
+drop_frame = tk.Frame(root, relief="groove", borderwidth=2)
+drop_frame.pack(padx=10, pady=5, fill="x")
+
+drop_instructions = "Drag and drop images or folders here to process them (saved to their original folder)."
+drop_label = tk.Label(drop_frame, text=drop_instructions, wraplength=480, justify="center", height=3)
+drop_label.pack(fill="both", padx=6, pady=6)
+
+if DND_AVAILABLE:
+    # Register drop target for the label/frame
+    try:
+        drop_label.drop_target_register(DND_FILES)
+        drop_label.dnd_bind('<<Drop>>', on_drop)
+    except Exception as e:
+        print("Failed to register drop target:", e)
+        DND_AVAILABLE = False
+
+progress_bar = ttk.Progressbar(root, orient="horizontal", length=480, mode="determinate")
 progress_bar.pack(pady=10)
+
+# If DnD not available, inform the user (non-blocking informational message)
+if not DND_AVAILABLE:
+    # Show a small info on startup once
+    def show_dnd_info():
+        messagebox.showinfo(
+            "Drag & Drop not available",
+            "Drag & drop support is not available because the 'tkinterdnd2' package is not installed.\n\n"
+            "To enable drag & drop, install it with:\n\n"
+            "    pip install tkinterdnd2\n\n"
+            "After installing, restart this program."
+        )
+    # Call after mainloop starts so it doesn't interrupt UI creation
+    root.after(200, show_dnd_info)
 
 root.mainloop()

@@ -33,6 +33,12 @@ From the `/dist` folder above, download and run the file `main.exe`.
 - [Pillow](https://python-pillow.org/) (Python Imaging Library fork)
 - Standard Python libraries: `tkinter` (usually included with Python)
 
+**Drag-and_Drop Feature requires pip install tkinterdnd2**
+
+```bash
+pip install tkinterdnd2
+```
+
 ### Procedure
 
 1. Clone this repository or download the script file.
