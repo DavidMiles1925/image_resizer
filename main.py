@@ -1,7 +1,7 @@
 import os
 import glob
 import tkinter as tk
-from tkinter import filedialog, simpledialog, ttk, messagebox
+from tkinter import filedialog, ttk, messagebox
 from PIL import Image
 from PIL import ImageEnhance
 import sys
@@ -16,7 +16,6 @@ def resource_path(relative_path):
 
 def resize_image(path, output_folder, target_size, keep_aspect, crop_to_fit, brightness_enhance, suffix):
     try:
-
         with Image.open(path) as img:
             if brightness_enhance:
                 enhancer = ImageEnhance.Brightness(img)
@@ -44,6 +43,10 @@ def process_images(input_folder, output_folder, target_size, keep_aspect, progre
     image_paths = [p for p in image_paths if p.lower().endswith((".jpg", ".jpeg", ".png", ".bmp", ".gif"))]
 
     total = len(image_paths)
+    if total == 0:
+        messagebox.showinfo("No Images", "No supported images found in the selected folder.")
+        return
+
     for i, path in enumerate(image_paths, start=1):
         filename_label.config(text=os.path.basename(path))  # Update label
         resize_image(path, output_folder, target_size, keep_aspect, crop_var.get(), brightness_var.get(), suffix_entry.get())
@@ -54,7 +57,29 @@ def process_images(input_folder, output_folder, target_size, keep_aspect, progre
     messagebox.showinfo("Done", f"Resized {total} images!")
 
 
+def validate_size_entries():
+    """Return (width, height) as integers if valid, otherwise show an error and return None."""
+    w = width_entry.get().strip()
+    h = height_entry.get().strip()
+    if not w or not h:
+        messagebox.showerror("Invalid size", "Please enter both width and height.")
+        return None
+    try:
+        width = int(w)
+        height = int(h)
+        if width <= 0 or height <= 0:
+            raise ValueError("Non-positive")
+    except Exception:
+        messagebox.showerror("Invalid size", "Width and height must be positive integers.")
+        return None
+    return (width, height)
+
+
 def start_resize():
+    sizes = validate_size_entries()
+    if sizes is None:
+        return
+
     messagebox.showinfo("Select Image Folder", "Select a folder that contains the images you want to resize.")
 
     input_folder = filedialog.askdirectory(title="Select Input Folder")
@@ -67,17 +92,17 @@ def start_resize():
     if not output_folder:
         return
 
-    width = simpledialog.askinteger("Resize", "Enter new width:")
-    height = simpledialog.askinteger("Resize", "Enter new height:")
-    if not width or not height:
-        return
-
     keep_aspect = aspect_var.get()
-    size = (width, height)
+    size = sizes
     progress_bar["value"] = 0
     process_images(input_folder, output_folder, size, keep_aspect, progress_bar, filename_label)
 
+
 def start_resize_selected():
+    sizes = validate_size_entries()
+    if sizes is None:
+        return
+
     messagebox.showinfo("Step 1", "Select one or more images you want to resize.")
 
     file_paths = filedialog.askopenfilenames(
@@ -94,12 +119,7 @@ def start_resize_selected():
     if not output_folder:
         return
 
-    width = simpledialog.askinteger("Resize", "Enter new width:")
-    height = simpledialog.askinteger("Resize", "Enter new height:")
-    if not width or not height:
-        return
-
-    size = (width, height)
+    size = sizes
     keep_aspect = aspect_var.get()
 
     total = len(file_paths)
@@ -147,7 +167,7 @@ try:
     root.iconbitmap(resource_path("resize.ico"))
 except Exception as e:
     print(f"Failed to load icon: {e}")
-root.geometry("400x350")
+root.geometry("420x380")
 
 frame = tk.Frame(root)
 frame.pack(pady=20)
@@ -176,20 +196,32 @@ suffix_entry = tk.Entry(frame)
 suffix_entry.insert(0, "_resized")  # Default value
 suffix_entry.grid(row=3, column=3, columnspan=2, pady=5)
 
+# New width and height entries placed below the suffix input
+width_label = tk.Label(frame, text="Width:", font=("Arial", 10))
+width_label.grid(row=4, column=0, pady=8, sticky="e")
+width_entry = tk.Entry(frame, width=10)
+width_entry.insert(0, "800")  # example default
+width_entry.grid(row=4, column=1, pady=8, sticky="w")
+
+height_label = tk.Label(frame, text="Height:", font=("Arial", 10))
+height_label.grid(row=4, column=2, pady=8, sticky="e")
+height_entry = tk.Entry(frame, width=10)
+height_entry.insert(0, "600")  # example default
+height_entry.grid(row=4, column=3, pady=8, sticky="w")
+
 button_label = tk.Label(frame, text="Resize folder or files(s)?", font=("Arial", 10, "bold"))
-button_label.grid(row=4, column=1, columnspan=2, pady=5)
+button_label.grid(row=5, column=1, columnspan=2, pady=5)
 
 start_button = tk.Button(frame, text="Start Batch (Folder) Resize", command=start_resize)
-start_button.grid(row=5, column=0, columnspan=2, pady=5)
+start_button.grid(row=6, column=0, columnspan=2, pady=5)
 
 select_button = tk.Button(frame, text="Resize Only Selected Images", command=start_resize_selected)
-select_button.grid(row=5, column=2, columnspan=2, pady=5)
+select_button.grid(row=6, column=2, columnspan=2, pady=5)
 
 filename_label = tk.Label(root, text="Ready", font=("Arial", 10))
 filename_label.pack(pady=5)
 
-progress_bar = ttk.Progressbar(root, orient="horizontal", length=300, mode="determinate")
+progress_bar = ttk.Progressbar(root, orient="horizontal", length=340, mode="determinate")
 progress_bar.pack(pady=10)
 
 root.mainloop()
-
