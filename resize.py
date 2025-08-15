@@ -7,16 +7,20 @@ from tkinter import filedialog, ttk, messagebox
 from PIL import Image
 from PIL import ImageEnhance
 
-# Try to import tkinterdnd2 for drag-and-drop support
+
+CURRENT_VERSION = "1.3"
+VESRION_YEAR = "2025"
+
+DEFAULT_IMAGE_RESIZE_WIDTH = 3072
+DEFAULT_IMAGE_RESIZE_HEIGHT = 3072
+DEFAULT_SUFFIX = "_resized"
+
+
 try:
     from tkinterdnd2 import DND_FILES, TkinterDnD
     DND_AVAILABLE = True
 except Exception:
     DND_AVAILABLE = False
-
-DEFAULT_IMAGE_RESIZE_WIDTH = 3072
-DEFAULT_IMAGE_RESIZE_HEIGHT = 3072
-DEFAULT_SUFFIX = "_resized"
 
 
 def resource_path(relative_path):
@@ -27,12 +31,23 @@ def resource_path(relative_path):
     return os.path.join(base_path, relative_path)
 
 
-def resize_image(path, output_folder, target_size, keep_aspect, crop_to_fit, brightness_enhance, suffix):
+def resize_image(path, output_folder, target_size, keep_aspect, crop_to_fit, brightness_percent, suffix):
+    """
+    brightness_percent: numeric percentage (e.g. 20 for +20%, -10 for -10%, 0 for no change)
+    """
     try:
         with Image.open(path) as img:
-            if brightness_enhance:
+            # Apply brightness change if requested (non-zero)
+            try:
+                b = float(brightness_percent)
+            except Exception:
+                b = 0.0
+            if b != 0.0:
+                factor = 1.0 + (b / 100.0)
+                # Prevent negative factor; factor < 0 makes no sense (clamp to 0.0 which gives black)
+                factor = max(0.0, factor)
                 enhancer = ImageEnhance.Brightness(img)
-                img = enhancer.enhance(1.2)
+                img = enhancer.enhance(factor)
 
             if crop_to_fit:
                 img = resize_and_crop(img, target_size)
@@ -259,60 +274,79 @@ if DND_AVAILABLE:
 else:
     root = tk.Tk()
 
-root.title("Batch Image Resizer v1.3 (with Drag & Drop)")
+root.title(f"Batch Image Resizer {CURRENT_VERSION} - © {VESRION_YEAR}")
 try:
     root.iconbitmap(resource_path("resize.ico"))
 except Exception as e:
     print(f"Failed to load icon: {e}")
-root.geometry("520x430")
+
+root.geometry("520x500")
+root.update_idletasks()
+root.minsize(root.winfo_width(), root.winfo_height())
 
 frame = tk.Frame(root)
 frame.pack(pady=10)
 
-bright_label = tk.Label(frame, text="Increase Brightness?", font=("Arial", 10, "bold"))
-bright_label.grid(row=0, column=0, columnspan=2, pady=5)
+# Brightness control: numeric percentage (Spinbox)
+bright_label = tk.Label(frame, text="Brightness (%):", font=("Arial", 10, "bold"))
+bright_label.grid(row=0, column=0, pady=5, sticky="e")
 
-brightness_var = tk.BooleanVar()
-brightness_check = tk.Checkbutton(frame, text="Increase brightness 20%", variable=brightness_var)
-brightness_check.grid(row=0, column=2, columnspan=2, pady=5)
+brightness_var = tk.DoubleVar(value=0.0)  # default 0% (no change)
+brightness_spin = tk.Spinbox(frame, from_=-100.0, to=500.0, increment=1.0, textvariable=brightness_var, width=8)
+brightness_spin.grid(row=0, column=1, pady=5, sticky="w")
+
+bright_hint = tk.Label(frame, text="(use negative to darken, positive to brighten)", font=("Arial", 8))
+bright_hint.grid(row=0, column=2, columnspan=2, pady=5, sticky="w")
+
+# Separator after Brightness section
+sep1 = ttk.Separator(frame, orient="horizontal")
+sep1.grid(row=1, column=0, columnspan=4, sticky="ew", pady=6)
 
 choice_label = tk.Label(frame, text="Select up to ONE:", font=("Arial", 10, "bold"))
-choice_label.grid(row=1, column=1, columnspan=2, pady=5)
+choice_label.grid(row=2, column=1, columnspan=2, pady=5)
 
 aspect_var = tk.BooleanVar()
 aspect_check = tk.Checkbutton(frame, text="Keep Aspect Ratio", variable=aspect_var)
-aspect_check.grid(row=2, column=0, columnspan=2, pady=5)
+aspect_check.grid(row=3, column=0, columnspan=2, pady=5)
 
 crop_var = tk.BooleanVar()
 crop_check = tk.Checkbutton(frame, text="Crop to Fit", variable=crop_var)
-crop_check.grid(row=2, column=2, columnspan=2, pady=5)
+crop_check.grid(row=3, column=2, columnspan=2, pady=5)
+
+# Separator after Cropping/Aspect section
+sep2 = ttk.Separator(frame, orient="horizontal")
+sep2.grid(row=4, column=0, columnspan=4, sticky="ew", pady=6)
 
 suffix_label = tk.Label(frame, text="Filename suffix:", font=("Arial", 10, "bold"))
-suffix_label.grid(row=3, column=1, columnspan=2, pady=5)
+suffix_label.grid(row=5, column=1, columnspan=2, pady=5)
 suffix_entry = tk.Entry(frame)
 suffix_entry.insert(0, DEFAULT_SUFFIX)  # Default value
-suffix_entry.grid(row=3, column=3, columnspan=2, pady=5)
+suffix_entry.grid(row=5, column=3, columnspan=2, pady=5)
+
+# Separator after Filename/Suffix section
+sep3 = ttk.Separator(frame, orient="horizontal")
+sep3.grid(row=6, column=0, columnspan=4, sticky="ew", pady=6)
 
 width_label = tk.Label(frame, text="Width:", font=("Arial", 10))
-width_label.grid(row=4, column=0, pady=8, sticky="e")
+width_label.grid(row=7, column=0, pady=8, sticky="e")
 width_entry = tk.Entry(frame, width=12)
 width_entry.insert(0, DEFAULT_IMAGE_RESIZE_WIDTH)
-width_entry.grid(row=4, column=1, pady=8, sticky="w")
+width_entry.grid(row=7, column=1, pady=8, sticky="w")
 
 height_label = tk.Label(frame, text="Height:", font=("Arial", 10))
-height_label.grid(row=4, column=2, pady=8, sticky="e")
+height_label.grid(row=7, column=2, pady=8, sticky="e")
 height_entry = tk.Entry(frame, width=12)
 height_entry.insert(0, DEFAULT_IMAGE_RESIZE_HEIGHT)
-height_entry.grid(row=4, column=3, pady=8, sticky="w")
+height_entry.grid(row=7, column=3, pady=8, sticky="w")
 
 button_label = tk.Label(frame, text="Resize folder or file(s)?", font=("Arial", 10, "bold"))
-button_label.grid(row=5, column=1, columnspan=2, pady=5)
+button_label.grid(row=8, column=1, columnspan=2, pady=5)
 
 start_button = tk.Button(frame, text="Start Batch (Folder) Resize", command=start_resize)
-start_button.grid(row=6, column=0, columnspan=2, pady=5)
+start_button.grid(row=9, column=0, columnspan=2, pady=5)
 
 select_button = tk.Button(frame, text="Resize Only Selected Images", command=start_resize_selected)
-select_button.grid(row=6, column=2, columnspan=2, pady=5)
+select_button.grid(row=9, column=2, columnspan=2, pady=5)
 
 filename_label = tk.Label(root, text="Ready", font=("Arial", 10))
 filename_label.pack(pady=5)
@@ -336,6 +370,9 @@ if DND_AVAILABLE:
 
 progress_bar = ttk.Progressbar(root, orient="horizontal", length=480, mode="determinate")
 progress_bar.pack(pady=10)
+
+created_by_label = tk.Label(root, text="Created by David Miles", font=("Arial", 9, "italic"), fg="gray")
+created_by_label.pack(pady=4)
 
 # If DnD not available, inform the user (non-blocking informational message)
 if not DND_AVAILABLE:
