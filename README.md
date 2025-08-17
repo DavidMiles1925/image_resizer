@@ -1,4 +1,4 @@
-# Batch Image Resizer
+# Batch Image Resizer v1.3
 
 A simple Python GUI application to batch resize images with options to keep aspect ratio or crop-to-fit. It supports resizing either an entire folder of images or selecting individual image files.
 
