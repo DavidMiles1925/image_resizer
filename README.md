@@ -51,24 +51,27 @@ A simple Python GUI application to batch resize images with options to keep aspe
 
 1. Clone this repository or download the script file.
 
-2. Create and activate a virtual environment (recommended)
+```bash
+git clone https://github.com/DavidMiles1925/image_resizer.git
+```
 
-   - python -m venv .venv
-   - On Windows: .venv\Scripts\activate
-   - On macOS/Linux: source .venv/bin/activate
+2. Install dependencies from requirements.txt:
 
-3. Install dependencies from requirements.txt:
+```bash
+pip install -r requirements.txt
+```
 
-   - pip install -r requirements.txt
+Notes:
 
-   Notes:
+- The `tkinterdnd2` package is optional. If it's not installed the app still runs, but drag & drop support will not be available.
+- On Debian/Ubuntu you may also need to install the system tkinter package:
+  - sudo apt-get install python3-tk
 
-   - The `tkinterdnd2` package is optional. If it's not installed the app still runs, but drag & drop support will not be available.
-   - On Debian/Ubuntu you may also need to install the system tkinter package:
-     - sudo apt-get install python3-tk
+3. Run the program:
 
-4. Run the program:
-   - python resize.py
+```bash
+python resize.py
+```
 
 ---
 
