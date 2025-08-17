@@ -26,6 +26,12 @@ A simple Python GUI application to batch resize images with options to keep aspe
 
 From the `/dist` folder above, download and run the file `resize.exe`.
 
+1. ![Dist Folder](./img/dist_folder_resized.png)
+2. ![EXE File](./img/resize_exe_resized.png)
+3. ![Windows EXE Download](./img/download_exe_resized.png)
+4. ![Windows Warning](./img/windows_more_info_resized.png)
+5. ![Windows Run Anyway](./img/windows_run_anyway_resized.png)
+
 ---
 
 ## Python Installation
