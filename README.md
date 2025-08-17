@@ -18,6 +18,8 @@ A simple Python GUI application to batch resize images with options to keep aspe
 - Supports common image formats: JPG, JPEG, PNG, BMP, GIF.
 - User-friendly dialogs guide you through each step.
 
+![GUI](./img/GUI_master_resized.png)
+
 ---
 
 ## Windows Installation
@@ -51,10 +53,10 @@ pip install pillow
 pip install tkinterdnd2
 ```
 
-3. Run the program from the command line.
+3. Navigate to the program's directory and run the program from the command line.
 
 ```bash
-python main.py
+python resize.py
 ```
 
 ---
