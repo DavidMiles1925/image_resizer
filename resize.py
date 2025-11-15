@@ -7,7 +7,6 @@ from tkinter import filedialog, ttk, messagebox
 from PIL import Image
 from PIL import ImageEnhance
 
-
 CURRENT_VERSION = "1.3"
 VESRION_YEAR = "2025"
 
@@ -15,12 +14,23 @@ DEFAULT_IMAGE_RESIZE_WIDTH = 3072
 DEFAULT_IMAGE_RESIZE_HEIGHT = 3072
 DEFAULT_SUFFIX = "_resized"
 
-
 try:
     from tkinterdnd2 import DND_FILES, TkinterDnD
     DND_AVAILABLE = True
 except Exception:
     DND_AVAILABLE = False
+
+# Optional HEIC/HEIF support via pillow-heif
+# Install with: pip install pillow-heif
+try:
+    import pillow_heif
+    try:
+        pillow_heif.register_heif_opener()
+    except Exception:
+        pass
+    HEIF_AVAILABLE = True
+except Exception:
+    HEIF_AVAILABLE = False
 
 
 def resource_path(relative_path):
@@ -34,6 +44,7 @@ def resource_path(relative_path):
 def resize_image(path, output_folder, target_size, keep_aspect, crop_to_fit, brightness_percent, suffix):
     """
     brightness_percent: numeric percentage (e.g. 20 for +20%, -10 for -10%, 0 for no change)
+    Returns output path on success, None on failure.
     """
     try:
         with Image.open(path) as img:
@@ -44,7 +55,6 @@ def resize_image(path, output_folder, target_size, keep_aspect, crop_to_fit, bri
                 b = 0.0
             if b != 0.0:
                 factor = 1.0 + (b / 100.0)
-                # Prevent negative factor; factor < 0 makes no sense (clamp to 0.0 which gives black)
                 factor = max(0.0, factor)
                 enhancer = ImageEnhance.Brightness(img)
                 img = enhancer.enhance(factor)
@@ -58,9 +68,42 @@ def resize_image(path, output_folder, target_size, keep_aspect, crop_to_fit, bri
 
             base = os.path.basename(path)
             name, ext = os.path.splitext(base)
-            output_path = os.path.join(output_folder, f"{name}{suffix}{ext}")
-            img.save(output_path)
-            return output_path
+            ext_lower = ext.lower()
+
+            # If source is HEIC/HEIF, always save as JPEG
+            if ext_lower in (".heic", ".heif"):
+                out_name = f"{name}{suffix}.jpg"
+                output_path = os.path.join(output_folder, out_name)
+                # JPEG doesn't support alpha; convert to RGB if necessary
+                if img.mode in ("RGBA", "LA", "P"):
+                    img_to_save = img.convert("RGB")
+                else:
+                    img_to_save = img
+                try:
+                    img_to_save.save(output_path, "JPEG", quality=95)
+                    return output_path
+                except Exception as e:
+                    print(f"Failed to save HEIC input as JPEG for {path}: {e}")
+                    return None
+            else:
+                # For other formats, try to keep original extension
+                output_path = os.path.join(output_folder, f"{name}{suffix}{ext}")
+                try:
+                    img.save(output_path)
+                    return output_path
+                except Exception as save_exc:
+                    # If saving with original extension fails, fall back to JPEG
+                    try:
+                        fallback_path = os.path.join(output_folder, f"{name}{suffix}.jpg")
+                        if img.mode in ("RGBA", "LA", "P"):
+                            converter = img.convert("RGB")
+                        else:
+                            converter = img
+                        converter.save(fallback_path, "JPEG", quality=95)
+                        return fallback_path
+                    except Exception as fallback_exc:
+                        print(f"Failed to save {path} (original save error: {save_exc}; fallback error: {fallback_exc})")
+                        return None
     except Exception as e:
         print(f"Failed to resize {path}: {e}")
         return None
@@ -68,7 +111,8 @@ def resize_image(path, output_folder, target_size, keep_aspect, crop_to_fit, bri
 
 def process_images(input_folder, output_folder, target_size, keep_aspect, progress_bar, filename_label):
     image_paths = glob.glob(os.path.join(input_folder, "*.*"))
-    image_paths = [p for p in image_paths if p.lower().endswith((".jpg", ".jpeg", ".png", ".bmp", ".gif"))]
+    supported_exts = (".jpg", ".jpeg", ".png", ".bmp", ".gif", ".heic", ".heif")
+    image_paths = [p for p in image_paths if p.lower().endswith(supported_exts)]
 
     total = len(image_paths)
     if total == 0:
@@ -76,12 +120,12 @@ def process_images(input_folder, output_folder, target_size, keep_aspect, progre
         return
 
     for i, path in enumerate(image_paths, start=1):
-        filename_label.config(text=os.path.basename(path))  # Update label
+        filename_label.config(text=os.path.basename(path))
         resize_image(path, output_folder, target_size, keep_aspect, crop_var.get(), brightness_var.get(), suffix_entry.get())
         progress_bar["value"] = (i / total) * 100
         root.update_idletasks()
 
-    filename_label.config(text="All done!")  # Reset text
+    filename_label.config(text="All done!")
     messagebox.showinfo("Done", f"Resized {total} images!")
 
 
@@ -135,7 +179,7 @@ def start_resize_selected():
 
     file_paths = filedialog.askopenfilenames(
         title="Select Image Files",
-        filetypes=[("Image files", "*.jpg *.jpeg *.png *.bmp *.gif")]
+        filetypes=[("Image files", "*.jpg *.jpeg *.png *.bmp *.gif *.heic *.heif")]
     )
 
     if not file_paths:
@@ -152,7 +196,7 @@ def start_resize_selected():
 
     total = len(file_paths)
     for i, path in enumerate(file_paths, start=1):
-        filename_label.config(text=os.path.basename(path))  # Show current file
+        filename_label.config(text=os.path.basename(path))
         resize_image(path, output_folder, size, keep_aspect, crop_var.get(), brightness_var.get(), suffix_entry.get())
         progress_bar["value"] = (i / total) * 100
         root.update_idletasks()
@@ -214,8 +258,7 @@ def handle_dropped_paths(paths):
     if sizes is None:
         return
 
-    # Expand directories to image lists; keep files as-is if they are images
-    supported_exts = (".jpg", ".jpeg", ".png", ".bmp", ".gif")
+    supported_exts = (".jpg", ".jpeg", ".png", ".bmp", ".gif", ".heic", ".heif")
     image_paths = []
 
     for p in paths:
@@ -226,11 +269,7 @@ def handle_dropped_paths(paths):
         elif os.path.isfile(p):
             if p.lower().endswith(supported_exts):
                 image_paths.append(p)
-            else:
-                # Not a supported image; skip
-                pass
         else:
-            # Path doesn't exist - skip
             pass
 
     if not image_paths:
@@ -247,7 +286,7 @@ def handle_dropped_paths(paths):
 
     for i, img_path in enumerate(image_paths, start=1):
         filename_label.config(text=os.path.basename(img_path))
-        output_folder = os.path.dirname(img_path)  # Save in original folder as requested
+        output_folder = os.path.dirname(img_path)
         resize_image(img_path, output_folder, size, keep_aspect, crop, brightness, suffix)
         progress_bar["value"] = (i / total) * 100
         root.update_idletasks()
@@ -291,7 +330,7 @@ frame.pack(pady=10)
 bright_label = tk.Label(frame, text="Brightness (%):", font=("Arial", 10, "bold"))
 bright_label.grid(row=0, column=0, pady=5, sticky="e")
 
-brightness_var = tk.DoubleVar(value=0.0)  # default 0% (no change)
+brightness_var = tk.DoubleVar(value=0.0)
 brightness_spin = tk.Spinbox(frame, from_=-100.0, to=500.0, increment=1.0, textvariable=brightness_var, width=8)
 brightness_spin.grid(row=0, column=1, pady=5, sticky="w")
 
@@ -320,7 +359,7 @@ sep2.grid(row=4, column=0, columnspan=4, sticky="ew", pady=6)
 suffix_label = tk.Label(frame, text="Filename suffix:", font=("Arial", 10, "bold"))
 suffix_label.grid(row=5, column=1, columnspan=2, pady=5)
 suffix_entry = tk.Entry(frame)
-suffix_entry.insert(0, DEFAULT_SUFFIX)  # Default value
+suffix_entry.insert(0, DEFAULT_SUFFIX)
 suffix_entry.grid(row=5, column=3, columnspan=2, pady=5)
 
 # Separator after Filename/Suffix section
@@ -360,7 +399,6 @@ drop_label = tk.Label(drop_frame, text=drop_instructions, wraplength=480, justif
 drop_label.pack(fill="both", padx=6, pady=6)
 
 if DND_AVAILABLE:
-    # Register drop target for the label/frame
     try:
         drop_label.drop_target_register(DND_FILES)
         drop_label.dnd_bind('<<Drop>>', on_drop)
@@ -376,7 +414,6 @@ created_by_label.pack(pady=4)
 
 # If DnD not available, inform the user (non-blocking informational message)
 if not DND_AVAILABLE:
-    # Show a small info on startup once
     def show_dnd_info():
         messagebox.showinfo(
             "Drag & Drop not available",
@@ -385,7 +422,19 @@ if not DND_AVAILABLE:
             "    pip install tkinterdnd2\n\n"
             "After installing, restart this program."
         )
-    # Call after mainloop starts so it doesn't interrupt UI creation
     root.after(200, show_dnd_info)
+
+# Inform user on startup if HEIF support is not available (optional, non-blocking)
+if not HEIF_AVAILABLE:
+    def show_heif_info():
+        messagebox.showinfo(
+            "HEIC/HEIF support not available",
+            "HEIC/HEIF images may not be supported on this system because the 'pillow-heif' package is not installed.\n\n"
+            "To add support for opening HEIC/HEIF files, install:\n\n"
+            "    pip install pillow-heif\n\n"
+            "If you install it, restart this program.\n\n"
+            "Note: Regardless, HEIC/HEIF inputs will be saved as JPEG output."
+        )
+    root.after(300, show_heif_info)
 
 root.mainloop()

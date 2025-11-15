@@ -1,3 +1,4 @@
 # Requirements for Batch Image Resizer
 Pillow>=9.0.0
 tkinterdnd2>=0.3.0
+pillow-heif>=0.12.0
