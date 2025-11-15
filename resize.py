@@ -7,7 +7,7 @@ from tkinter import filedialog, ttk, messagebox
 from PIL import Image
 from PIL import ImageEnhance
 
-CURRENT_VERSION = "1.3"
+CURRENT_VERSION = "1.4"
 VESRION_YEAR = "2025"
 
 DEFAULT_IMAGE_RESIZE_WIDTH = 3072

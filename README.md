@@ -1,4 +1,4 @@
-# Batch Image Resizer v1.3
+# Batch Image Resizer v1.4
 
 A simple Python GUI application to batch resize images with options to keep aspect ratio or crop-to-fit. It supports resizing either an entire folder of images or selecting individual image files.
 
@@ -15,7 +15,7 @@ A simple Python GUI application to batch resize images with options to keep aspe
 - Drag and drop files to the GUI to resize them. (added v1.3)
 - Progress bar to track batch resizing progress.
 - Display current working filename above the progress bar. (v1.2)
-- Supports common image formats: JPG, JPEG, PNG, BMP, GIF.
+- Supports common image formats: JPG, JPEG, PNG, BMP, GIF. HEIC/HEIF added in v1.4
 - User-friendly dialogs guide you through each step.
 
 ![GUI](./img/GUI_master_resized.png)
@@ -139,6 +139,25 @@ python resize.py
   - Saving may drop embedded color profiles, leading to slight color shifts in some viewers. If color fidelity matters, consider converting to sRGB explicitly or preserving ICC profiles (requires code changes).
 - HEIC/HEIF and WebP
   - Not currently supported via the extension filter. To work with HEIC/HEIF, install pillow-heif and modify the extension filter; WebP may work if your Pillow build supports it and you extend the allowed extensions.
+
+### HEIC/HEIF support and saving behavior
+
+- HEIC/HEIF input support requires pillow-heif:
+  - Install with: pip install pillow-heif
+  - If pillow-heif is not installed, HEIC/HEIF files may not open and will cause errors or be skipped. The app will display a message on startup if HEIF support is missing.
+  - On some Linux distributions you may need system libraries (libheif and/or decoders) for pillow-heif to work; consult the pillow-heif documentation for platform-specific instructions.
+- If HEIC/HEIF files still fail to open after installing pillow-heif:
+  - Ensure your Python environment is the one you installed pillow-heif into (activate the correct virtualenv).
+  - Check for install-time warnings/errors (native libs missing on Linux).
+- HEIC/HEIF inputs are now always saved as JPEG:
+  - Any .heic/.heif file processed by the app will produce an output file with the .jpg extension (suffix + .jpg).
+  - JPEG does not support alpha/transparency; if the source has an alpha channel it will be converted to RGB (alpha discarded) before saving.
+  - Metadata (EXIF, ICC) may be lost during conversion to JPEG—if preserving metadata is important you will need additional code to copy EXIF/ICC data.
+- If you see errors saving HEIC files:
+  - The code intentionally writes HEIC inputs to JPEG to avoid unreliable HEIC saving support. If saving still fails, check output folder write permissions and available disk space.
+  - If saving to the same folder where the original file is open (Windows), the save may fail — use a different output folder or keep a non-empty suffix so the filename differs.
+- If you want HEIC output instead of JPEG
+  - This release forces HEIC inputs to JPEG outputs. To change behavior, edit the saving logic in resize_image and ensure you have saving support for HEIC in your environment (not always available).
 
 ### Resizing options
 
