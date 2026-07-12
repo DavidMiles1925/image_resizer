@@ -36,13 +36,15 @@ Then...
 
 ![Windows EXE Download](./img/download_exe_resized.png)
 
-**2. When the warning appears, click "More Info" followed by "Run Anyway"**
+**2. Run `resize.exe`. When the warning appears, click "More Info" followed by "Run Anyway"**
 
 ![Windows Warning](./img/windows_more_info_resized.png)
 
 Then...
 
 ![Windows Run Anyway](./img/windows_run_anyway_resized.png)
+
+**This completes Windows Installation**
 
 ---
 
