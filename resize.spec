@@ -1,12 +1,21 @@
 # -*- mode: python ; coding: utf-8 -*-
+from PyInstaller.utils.hooks import collect_all
+
+datas = [('resize.ico', '.')]
+binaries = []
+hiddenimports = []
+tmp_ret = collect_all('PIL')
+datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
+tmp_ret = collect_all('pillow_heif')
+datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
 
 
 a = Analysis(
     ['resize.py'],
     pathex=[],
-    binaries=[],
-    datas=[('resize.ico', '.')],
-    hiddenimports=[],
+    binaries=binaries,
+    datas=datas,
+    hiddenimports=hiddenimports,
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],

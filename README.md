@@ -142,6 +142,8 @@ python resize.py
 
 ### HEIC/HEIF support and saving behavior
 
+- Recieve error on startup saying pillow-heif is not installed while running resize.exe
+  - Rebundle exe file using python `-m PyInstaller --onefile --windowed --icon=resize.ico --add-data "resize.ico;." --collect-all PIL --collect-all pillow_heif resize.py`
 - HEIC/HEIF input support requires pillow-heif:
   - Install with: pip install pillow-heif
   - If pillow-heif is not installed, HEIC/HEIF files may not open and will cause errors or be skipped. The app will display a message on startup if HEIF support is missing.
@@ -203,6 +205,12 @@ Windows package was made with pyinstaller:
 pip install pyinstaller
 pyinstaller --onefile --windowed --icon=resize.ico --add-data "resize.ico;." resize.py
 ```
+
+> NOTE: I have had issues getting pillow-heif to bundle properly. If that happens try this:
+>
+> ```bash
+> python -m PyInstaller --onefile --windowed --icon=resize.ico --add-data "resize.ico;." --collect-all PIL --collect-all pillow_heif resize.py
+> ```
 
 If you build a distribution, ensure any extra files (icons, README, LICENSE, image assets) are correctly included with the `--add-data` option for pyinstaller.
 
